@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Digital Signage - 4K Player</title>
+<style>
+  html,body {
+    height: 100%;
+    margin: 0;
+    background: #000;
+  }
+  .container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <video id="player" autoplay muted playsinline loop width="3840" height="2160">
+    <source id="src" src="video.mp4" type="video/mp4">
+    Dein Browser unterstützt kein MP4.
+  </video>
+</div>
+
+<script>
+// Videoelement holen
+const player = document.getElementById('player');
+
+// Quelle alle 60 Sekunden neu laden
+const RELOAD_INTERVAL_MS = 60 * 1000;
+
+function reloadVideo(){
+  const url = 'video.mp4?v=' + Date.now(); // Cache-Buster
+  const newVideo = document.createElement('video');
+  newVideo.setAttribute('playsinline','');
+  newVideo.muted = true;
+  newVideo.autoplay = true;
+  newVideo.loop = true;
+  newVideo.width = 3840;
+  newVideo.height = 2160;
+  newVideo.style.position = 'absolute';
+  newVideo.style.inset = '0';
+  newVideo.style.width = '100%';
+  newVideo.style.height = '100%';
+  newVideo.style.objectFit = 'cover';
+  newVideo.innerHTML = '<source src="'+url+'" type="video/mp4">';
+
+  document.querySelector('.container').appendChild(newVideo);
+
+  const tryPlay = () => {
+    newVideo.play().then(()=>{
+      setTimeout(() => {
+        player.pause();
+        player.remove();
+        newVideo.id = 'player';
+        window.player = newVideo;
+      }, 250);
+    }).catch(()=>{
+      document.getElementById('src').src = url;
+      player.load();
+      player.play().catch(()=>{});
+      newVideo.remove();
+    });
+  };
+
+  newVideo.addEventListener('canplay', tryPlay);
+  setTimeout(tryPlay, 4000);
+}
+
+setInterval(reloadVideo, RELOAD_INTERVAL_MS);
+</script>
+</body>
+</html>
